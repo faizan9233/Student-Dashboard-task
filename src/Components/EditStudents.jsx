@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { updateDoc, doc as firestoreDoc } from 'firebase/firestore';
 import { db } from '@/FirebaseConfig/firebase';
 import toast from 'react-hot-toast';
+import Loader from './Loader';
 
 const EditStudents = ({ student, onClose, onUpdate }) => {
     const [formData, setFormData] = useState({

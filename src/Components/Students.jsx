@@ -1,5 +1,4 @@
-'use client';
-
+'use client'
 import React, { useEffect, useState } from 'react';
 import { collection, addDoc, getDocs, doc as firestoreDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import Pagination from 'rc-pagination';
@@ -10,9 +9,10 @@ import { db } from '@/FirebaseConfig/firebase';
 import Sidebar from './Sidebar';
 import EditStudents from './EditStudents'; // Import the EditStudent component
 import toast, { Toaster } from 'react-hot-toast';
-
+import Loader from './Loader'; // Import the Loader component
 
 const Students = () => {
+    const [loading, setLoading] = useState(false); // State to manage loading state
     const [studentRecords, setStudentRecords] = useState([]);
     const [pageSize] = useState(10); // Number of records per page
     const [currentPage, setCurrentPage] = useState(1); // Current page number
@@ -26,6 +26,7 @@ const Students = () => {
 
    
     const fetchStudentRecords = async () => {
+        setLoading(true); // Set loading to true when fetching data
         const recordsSnapshot = await getDocs(collection(db, 'students'));
         const newStudentRecords = [];
         recordsSnapshot.forEach((doc) => {
@@ -37,6 +38,7 @@ const Students = () => {
         const totalRecords = newStudentRecords.length;
         const totalPages = Math.ceil(totalRecords / pageSize);
         setTotalPages(totalPages);
+        setLoading(false); // Set loading to false after data is fetched
     };
 
     const handleFileUpload = async (event) => {
@@ -55,6 +57,7 @@ const Students = () => {
       });
   
       const validRecords = records.filter((record) => record !== null);
+      setLoading(true); // Set loading to true when uploading data
       for (const record of validRecords) {
           try {
               await addDoc(collection(db, 'students'), record);
@@ -62,6 +65,7 @@ const Students = () => {
               console.error('Error adding document: ', error);
           }
       }
+      setLoading(false); // Set loading to false after data is uploaded
   
       toast.success('CSV data uploaded to Firebase Firestore successfully');
   
@@ -87,13 +91,16 @@ const Students = () => {
 
     const onDelete = async (id) => {
         try {
+            setLoading(true); // Set loading to true when deleting
             await deleteDoc(firestoreDoc(db, 'students', id));
             setStudentRecords((prevRecords) => prevRecords.filter((student) => student.id !== id));
+            setLoading(false); // Set loading to false after deletion
 
             toast.success('Student deleted successfully');
         } catch (error) {
             console.error(error);
             toast.error('Error deleting Student');
+            setLoading(false); // Set loading to false in case of error
         }
     };
 
@@ -107,11 +114,13 @@ const Students = () => {
 };
 
 const handleUpdateStudent = (updatedData) => {
+  setLoading(true); // Set loading to true when updating
   setStudentRecords((prevRecords) =>
       prevRecords.map((student) =>
           student.id === editID ? { ...student, ...updatedData } : student
       )
   );
+  setLoading(false); // Set loading to false after updating
 };
     const onPageChange = (page) => {
       setCurrentPage(page);
@@ -131,7 +140,11 @@ const handleUpdateStudent = (updatedData) => {
                 <button className="bg-green-500 text-white px-3 py-2 rounded-md" onClick={exportToPDF}>Export to PDF</button>
             </div>
             
-            <div className="overflow-x-auto px-5">
+            {/* Conditional rendering of Loader component */}
+            {loading ? (
+              <Loader />
+            ) : (
+              <div className="overflow-x-auto px-5">
                 <table className="min-w-full divide-y-2 divide-gray-200 bg-white rounded-lg shadow-sm text-sm">
                     {/* Table headings */}
                     <thead>
@@ -163,6 +176,8 @@ const handleUpdateStudent = (updatedData) => {
                     </tbody>
                 </table>
             </div>
+            )}
+            
             {/* Pagination component */}
             <div className="flex justify-center mt-4">
                 <Pagination
