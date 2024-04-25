@@ -1,4 +1,4 @@
-import Students from '@/Components/Students'
+import Students from '@/components/Students'
 import React from 'react'
 
 const Home = () => {
