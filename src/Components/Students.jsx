@@ -7,26 +7,25 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { db } from '@/FirebaseConfig/firebase';
 import Sidebar from './Sidebar';
-import EditStudents from './EditStudents'; // Import the EditStudent component
+import EditStudents from './EditStudents';
 import toast, { Toaster } from 'react-hot-toast';
-import Loader from './Loader'; // Import the Loader component
+import Loader from './Loader';
 
 const Students = () => {
-    const [loading, setLoading] = useState(false); // State to manage loading state
+    const [loading, setLoading] = useState(false);
     const [studentRecords, setStudentRecords] = useState([]);
-    const [pageSize] = useState(10); // Number of records per page
-    const [currentPage, setCurrentPage] = useState(1); // Current page number
-    const [totalPages, setTotalPages] = useState(1); // Total number of pages
-    const [editID, setEditID] = useState(null); // ID of the student being edited
-    const [showEditModal, setShowEditModal] = useState(false); 
+    const [pageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [editID, setEditID] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
         fetchStudentRecords();
     }, [currentPage]); 
 
-   
     const fetchStudentRecords = async () => {
-        setLoading(true); // Set loading to true when fetching data
+        setLoading(true);
         const recordsSnapshot = await getDocs(collection(db, 'students'));
         const newStudentRecords = [];
         recordsSnapshot.forEach((doc) => {
@@ -34,11 +33,10 @@ const Students = () => {
         });
         setStudentRecords(newStudentRecords);
 
-        // Calculate the total number of pages
         const totalRecords = newStudentRecords.length;
         const totalPages = Math.ceil(totalRecords / pageSize);
         setTotalPages(totalPages);
-        setLoading(false); // Set loading to false after data is fetched
+        setLoading(false);
     };
 
     const handleFileUpload = async (event) => {
@@ -57,7 +55,7 @@ const Students = () => {
       });
   
       const validRecords = records.filter((record) => record !== null);
-      setLoading(true); // Set loading to true when uploading data
+      setLoading(true);
       for (const record of validRecords) {
           try {
               await addDoc(collection(db, 'students'), record);
@@ -65,11 +63,10 @@ const Students = () => {
               console.error('Error adding document: ', error);
           }
       }
-      setLoading(false); // Set loading to false after data is uploaded
+      setLoading(false);
   
       toast.success('CSV data uploaded to Firebase Firestore successfully');
   
-      // After uploading, fetch the updated student records
       fetchStudentRecords();
   };
   
@@ -91,16 +88,16 @@ const Students = () => {
 
     const onDelete = async (id) => {
         try {
-            setLoading(true); // Set loading to true when deleting
+            setLoading(true);
             await deleteDoc(firestoreDoc(db, 'students', id));
             setStudentRecords((prevRecords) => prevRecords.filter((student) => student.id !== id));
-            setLoading(false); // Set loading to false after deletion
+            setLoading(false);
 
             toast.success('Student deleted successfully');
         } catch (error) {
             console.error(error);
             toast.error('Error deleting Student');
-            setLoading(false); // Set loading to false in case of error
+            setLoading(false);
         }
     };
 
@@ -114,50 +111,43 @@ const Students = () => {
 };
 
 const handleUpdateStudent = (updatedData) => {
-  setLoading(true); // Set loading to true when updating
+  setLoading(true);
   setStudentRecords((prevRecords) =>
       prevRecords.map((student) =>
           student.id === editID ? { ...student, ...updatedData } : student
       )
   );
-  setLoading(false); // Set loading to false after updating
+  setLoading(false);
 };
     const onPageChange = (page) => {
       setCurrentPage(page);
   };
 
   return (
-    <div className="flex">
+    <div className="flex w-full">
         <Sidebar />
         <div className="w-full md:pl-56 md:px-24 flex flex-col gap-5">
-            {/* Header */}
             <div className="px-5 text-2xl font-semibold pb-5 text-white">Students</div>
             <div className="flex justify-between items-center px-5">
-                {/* Input for CSV file upload */}
                 <input type="file" id="csv-file" onChange={handleFileUpload} />
-                {/* Button to trigger data upload to Firebase */}
                 <button className="bg-blue-500 text-white px-3 py-2 rounded-md" onClick={handleFileUpload}>Upload to Firebase</button>
                 <button className="bg-green-500 text-white px-3 py-2 rounded-md" onClick={exportToPDF}>Export to PDF</button>
             </div>
             
-            {/* Conditional rendering of Loader component */}
             {loading ? (
               <Loader />
             ) : (
               <div className="overflow-x-auto px-5">
                 <table className="min-w-full divide-y-2 divide-gray-200 bg-white rounded-lg shadow-sm text-sm">
-                    {/* Table headings */}
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Nationality</th>
                             <th>City</th>
-                            <th>Action</th> {/* New column for edit and delete buttons */}
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    {/* Table body */}
                     <tbody className="divide-y divide-gray-200">
-                        {/* Displaying student records for the current page */}
                         {studentRecords
                             .slice((currentPage - 1) * pageSize, currentPage * pageSize)
                             .map((student, index) => (
@@ -166,9 +156,7 @@ const handleUpdateStudent = (updatedData) => {
                                     <td className="px-6 py-4 whitespace-nowrap">{student.nationality}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">{student.city}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        {/* Edit button */}
                                         <button className="text-blue-600 hover:text-blue-900 mr-2" onClick={() => handleEdit(student.id)}>Edit</button>
-                                        {/* Delete button */}
                                         <button className="text-red-600 hover:text-red-900" onClick={() => onDelete(student.id)}>Delete</button>
                                     </td>
                                 </tr>
@@ -178,7 +166,6 @@ const handleUpdateStudent = (updatedData) => {
             </div>
             )}
             
-            {/* Pagination component */}
             <div className="flex justify-center mt-4">
                 <Pagination
                     current={currentPage}
@@ -187,10 +174,7 @@ const handleUpdateStudent = (updatedData) => {
                     onChange={onPageChange}
                 />
             </div>
-            {/* Button to export student records to PDF */}
-          
         </div>
-        {/* Edit student modal */}
         {showEditModal && (
             <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
                 <EditStudents
